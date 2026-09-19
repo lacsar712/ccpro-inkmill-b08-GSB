@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from app.auth import hash_password
@@ -8,6 +8,7 @@ from app.models.mill import Mill
 from app.models.user import User
 from app.models.viscosity_sample import ViscositySample
 from app.models.workshop import Workshop
+from app.utils import now_cst_naive
 
 
 def seed() -> None:
@@ -58,7 +59,11 @@ def seed() -> None:
             db.add_all([m1, m2, m3])
             db.flush()
 
-            now = datetime.now()
+            # 所有演示时间均按东八区挂钟时间书写。
+            now = now_cst_naive()
+            # 东八区当日 23:30 开班、时长 90 分钟（次日 01:00 才结束）的跨午夜遍次：
+            # 整段计入 startedAt 所在的当日 afternoon，不得拆到次日 night/morning。
+            tonight_2330 = now.replace(hour=23, minute=30, second=0, microsecond=0)
             db.add_all(
                 [
                     ViscositySample(
@@ -105,6 +110,14 @@ def seed() -> None:
                         duration_min=Decimal("60.00"),
                         media_type="1.0mm 玻璃珠",
                         operator_name="李工",
+                    ),
+                    GrindPass(
+                        mill_id=m1.id,
+                        started_at=tonight_2330,
+                        pass_no=3,
+                        duration_min=Decimal("90.00"),
+                        media_type="0.8mm 锆珠",
+                        operator_name="张研磨",
                     ),
                 ]
             )

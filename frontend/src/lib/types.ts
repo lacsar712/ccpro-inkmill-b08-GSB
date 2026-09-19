@@ -50,3 +50,18 @@ export interface DashboardStats {
   samplesLast24h: number;
   passesLast7d: number;
 }
+
+export type ShiftKey = 'night' | 'morning' | 'afternoon';
+
+export interface ShiftSummary {
+  key: ShiftKey;
+  name: string;
+  window: string;
+  passCount: number;
+  totalMinutes: number;
+}
+
+export interface ShiftSummaryResponse {
+  date: string;
+  shifts: ShiftSummary[];
+}

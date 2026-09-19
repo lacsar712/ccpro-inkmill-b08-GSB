@@ -35,6 +35,21 @@ MySQL 连接：`inkmill` / `inkmill` / `inkmill`（库名/用户/密码）
 3. **ViscositySample**：`millId`, `sampledAt`, `viscosityPaS`（须 &gt; 0，否则 HTTP 400）, `tempC`, `notes`
 4. **GrindPass**：`millId`, `startedAt`, `passNo`（≥ 1）, `durationMin`（&gt; 0）, `mediaType`, `operatorName`
 5. **Dashboard**：`workshopTotal`, `grindingMillCount`, `samplesLast24h`, `passesLast7d`
+6. **Dashboard 班次汇总**：`GET /api/dashboard/shifts?date=YYYY-MM-DD`，返回当日三班的 `passCount` 与 `totalMinutes`（各班 `GrindPass.durationMin` 之和）
+
+## 时区与班次口径
+
+- 全厂统一使用**东八区（UTC+8）自然日**，不以 UTC 零点切日；数据库时间按东八区挂钟时间存取。
+- `GET /api/dashboard/shifts` 的 `date` 缺省为东八区今天；日期必须是合法的 `YYYY-MM-DD`，否则返回 HTTP 400。
+- 三班边界（左闭右开，边界整点归入更早开始的那一班）：
+
+| 班次 | 时段（东八区） | 边界归属 |
+|------|----------------|----------|
+| night 夜班 | 00:00–08:00 | 00:00 归 night |
+| morning 早班 | 08:00–16:00 | 08:00 归 morning |
+| afternoon 午班 | 16:00–24:00 | 16:00 归 afternoon |
+
+- **跨午夜不拆分**：每条遍次只按 `startedAt`（开始时间）归入一个班次，`totalMinutes` 整段计入该班。例如 23:30 开始、时长 90 分钟的遍次（次日 01:00 结束）整段计入当日 afternoon，不会出现在次日的 night 或 morning 中。前端仪表盘只展示该接口返回的数字，不在浏览器端对遍次数组分组。
 
 ## 快速启动（Docker）
 
